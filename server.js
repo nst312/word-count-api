@@ -11,8 +11,8 @@ app.use(bodyParser.json());
 app.use(cors());
 
 mongoose
-.connect("mongodb://localhost:27017/growth")
-.then(() => console.log(` ---------- Connected to DB at : ${"mongodb://localhost:27017/growth"} ---------- `))
+.connect("mongodb+srv://nevil:nevil@cluster0.rb4qwkt.mongodb.net/?retryWrites=true&w=majority/growth")
+.then(() => console.log(` ---------- Connected to DB at : ${"mongodb+srv://nevil:nevil@cluster0.rb4qwkt.mongodb.net/?retryWrites=true&w=majority/growth"} ---------- `))
 .catch((err) => console.log(err));
 
 app.use(express.static(path.join(__dirname+"./public")))
