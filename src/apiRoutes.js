@@ -1,74 +1,81 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
-const browser = await puppeteer.launch();
 const { URL } = require('url');
-const Insight = require("./insights.model")
+const Insight = require('./insights.model');
+const { chromium } = require('playwright');
 
 const router = express.Router();
 
-
 router.post('/analyze', async (req, res) => {
     const url = req.body.url;
-
+  
     try {
-       
-        const page = await browser.newPage();
-        const data = await page.goto(url, { waitUntil: 'networkidle2' });
-        const wordCount = await page.evaluate(() => {
-            const text = document.querySelector('body').innerText;
-            const words = text.split(/\s+/).filter((word) => word !== '');
-            return words.length;
-        });
-        const links = await page.evaluate(() => {
-            const linkElements = document.querySelectorAll('a');
-            const links = Array.from(linkElements)
-                .map((element) => element.getAttribute('href'))
-                .filter((link) => link && link.startsWith('https'));
-            return links;
-        });
-        const media = await page.evaluate(() => {
-            const imageElements = document.querySelectorAll('img');
-            const videoElements = document.querySelectorAll('video');
-
-            const mediaElements = Array.from(imageElements).concat(Array.from(videoElements));
-
-            const media = mediaElements.map((element) => element.src);
-
-            return media;
-        });
-
-
-        const domain = new URL(url).hostname;
-
-        await browser.close();
-        const result = await Insight.create({
-            domain, wordCount, links, media
-        })
-
-        res.json({ result });
+      const browser = await chromium.launch();
+      const context = await browser.newContext();
+      const page = await context.newPage();
+      await page.goto(url, { waitUntil: 'networkidle' });
+  
+      const text = await page.textContent('body');
+      const words = text.split(/\s+/).filter((word) => word !== '');
+      const wordCount = words.length;
+  
+      const links = await page.$$eval('a[href^="https"]', (elements) =>
+        elements.map((element) => element.href)
+      );
+  
+      const media = await page.$$eval('img, video', (elements) =>
+        elements.map((element) => element.src)
+      );
+  
+      const domain = new URL(url).hostname;
+  
+      await browser.close();
+  
+      const result = await Insight.create({
+        domain,
+        wordCount,
+        links,
+        media,
+      });
+  
+      res.json({ result });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Failed to analyze the webpage' });
+      console.error(error);
+      res.status(500).json({ error: 'Failed to analyze the webpage' });
     }
-});
+  });
 
 router.get('/insights', async (req, res) => {
-    const result = await Insight.find()
+  try {
+    const result = await Insight.find();
     res.json({ result });
-})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to retrieve insights' });
+  }
+});
 
 router.delete('/insights/:id', async (req, res) => {
-    const result = await Insight.findByIdAndDelete(req.params.id)
+  try {
+    const result = await Insight.findByIdAndDelete(req.params.id);
     res.json({ result });
-})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to delete insight' });
+  }
+});
 
 router.put('/insights/:id', async (req, res) => {
-    const result = await Insight.findById(req.params.id)
-    result.favourite = true
-    await result.save()
-    console.log("......", result);
+  try {
+    const result = await Insight.findById(req.params.id);
+    result.favourite = true;
+    await result.save();
+    console.log('......', result);
 
     res.json({ result });
-})
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Failed to update insight' });
+  }
+});
 
 module.exports = router;
