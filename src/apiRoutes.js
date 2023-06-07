@@ -1,7 +1,7 @@
 const express = require('express');
 const { URL } = require('url');
 const Insight = require('./insights.model');
-const { chromium } = require('playwright');
+const puppeteer = require('puppeteer');
 
 const router = express.Router();
 
@@ -9,12 +9,11 @@ router.post('/analyze', async (req, res) => {
   const url = req.body.url;
 
   try {
-    const browser = await chromium.launch({ executablePath: await chromium.executablePath() });
-    const context = await browser.newContext();
-    const page = await context.newPage();
-    await page.goto(url, { waitUntil: 'networkidle' });
+    const browser = await puppeteer.launch();
+    const page = await browser.newPage();
+    await page.goto(url, { waitUntil: 'networkidle0' });
 
-    const text = await page.textContent('body');
+    const text = await page.evaluate(() => document.body.textContent);
     const words = text.split(/\s+/).filter((word) => word !== '');
     const wordCount = words.length;
 
@@ -26,12 +25,10 @@ router.post('/analyze', async (req, res) => {
       elements.map((element) => element.src)
     );
 
-    const domain = new URL(url).hostname;
-
     await browser.close();
 
     const result = await Insight.create({
-      domain,
+      domain: new URL(url).hostname,
       wordCount,
       links,
       media,
