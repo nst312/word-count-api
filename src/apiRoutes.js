@@ -9,8 +9,7 @@ router.post('/analyze', async (req, res) => {
   const url = req.body.url;
 
   try {
-    const executablePath = await chromium.executablePath();
-    const browser = await chromium.launch({ executablePath });
+    const browser = await chromium.launch({ executablePath: await chromium.executablePath() });
     const context = await browser.newContext();
     const page = await context.newPage();
     await page.goto(url, { waitUntil: 'networkidle' });
