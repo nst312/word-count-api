@@ -6,43 +6,44 @@ const { chromium } = require('playwright');
 const router = express.Router();
 
 router.post('/analyze', async (req, res) => {
-    const url = req.body.url;
-  
-    try {
-      const browser = await chromium.launch();
-      const context = await browser.newContext();
-      const page = await context.newPage();
-      await page.goto(url, { waitUntil: 'networkidle' });
-  
-      const text = await page.textContent('body');
-      const words = text.split(/\s+/).filter((word) => word !== '');
-      const wordCount = words.length;
-  
-      const links = await page.$$eval('a[href^="https"]', (elements) =>
-        elements.map((element) => element.href)
-      );
-  
-      const media = await page.$$eval('img, video', (elements) =>
-        elements.map((element) => element.src)
-      );
-  
-      const domain = new URL(url).hostname;
-  
-      await browser.close();
-  
-      const result = await Insight.create({
-        domain,
-        wordCount,
-        links,
-        media,
-      });
-  
-      res.json({ result });
-    } catch (error) {
-      console.error(error);
-      res.status(500).json({ error: error });
-    }
-  });
+  const url = req.body.url;
+
+  try {
+    const executablePath = await chromium.executablePath();
+    const browser = await chromium.launch({ executablePath });
+    const context = await browser.newContext();
+    const page = await context.newPage();
+    await page.goto(url, { waitUntil: 'networkidle' });
+
+    const text = await page.textContent('body');
+    const words = text.split(/\s+/).filter((word) => word !== '');
+    const wordCount = words.length;
+
+    const links = await page.$$eval('a[href^="https"]', (elements) =>
+      elements.map((element) => element.href)
+    );
+
+    const media = await page.$$eval('img, video', (elements) =>
+      elements.map((element) => element.src)
+    );
+
+    const domain = new URL(url).hostname;
+
+    await browser.close();
+
+    const result = await Insight.create({
+      domain,
+      wordCount,
+      links,
+      media,
+    });
+
+    res.json({ result });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error });
+  }
+});
 
 router.get('/insights', async (req, res) => {
   try {
