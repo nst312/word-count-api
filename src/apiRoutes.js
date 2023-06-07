@@ -17,13 +17,13 @@ router.post('/analyze', async (req, res) => {
     const words = text.split(/\s+/).filter((word) => word !== '');
     const wordCount = words.length;
 
-    const links = await page.$$eval('a[href^="https"]', (elements) =>
+    const links = (await page.$$eval('a[href^="https"]', (elements) =>
       elements.map((element) => element.href)
-    );
+    )) || [];
 
-    const media = await page.$$eval('img, video', (elements) =>
+    const media = (await page.$$eval('img, video', (elements) =>
       elements.map((element) => element.src)
-    );
+    )) || [];
 
     await browser.close();
 
