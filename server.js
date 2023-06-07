@@ -12,7 +12,7 @@ app.use(cors());
 
 mongoose
 .connect("mongodb+srv://nevil:nevil@cluster0.rb4qwkt.mongodb.net/growth?retryWrites=true&w=majority")
-.then(() => console.log(` ---------- Connected to DB at : ${"mongodb+srv://nevil:nevil@cluster0.rb4qwkt.mongodb.net/?retryWrites=true&w=majority/growth"} ---------- `))
+.then(() => console.log(` ---------- Connected to DB at : ${"mongodb+srv://nevil:nevil@cluster0.rb4qwkt.mongodb.net/growth?retryWrites=true&w=majority/"} ---------- `))
 .catch((err) => console.log(err));
 
 app.use(express.static(path.join(__dirname+"./public")))

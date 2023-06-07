@@ -40,7 +40,7 @@ router.post('/analyze', async (req, res) => {
       res.json({ result });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Failed to analyze the webpage' });
+      res.status(500).json({ error: error });
     }
   });
 
